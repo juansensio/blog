@@ -2,3 +2,4 @@ lightning_logs
 checkpoints
 .ipynb_checkpoints
 data
+.vscode
