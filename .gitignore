@@ -3,3 +3,4 @@ checkpoints
 .ipynb_checkpoints
 data
 .vscode
+log
