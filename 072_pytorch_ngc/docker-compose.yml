@@ -1,0 +1,16 @@
+version: "2.3"
+
+services:
+  pytorch-ngc:
+    runtime: nvidia
+    container_name: pytorch-ngc
+    image: nvcr.io/nvidia/pytorch:21.06-py3
+    ipc: host
+    ports:
+      - 8888:8888
+    volumes:
+      - ./:/workspace
+      - ./data:/workspace/data
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    command: jupyter notebook --allow-root --ip=0.0.0.0 --no-browser --NotebookApp.token=abc123
