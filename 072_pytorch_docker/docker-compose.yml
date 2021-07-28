@@ -5,14 +5,12 @@ services:
     runtime: nvidia
     container_name: pytorch-ngc
     image: pytorch-ngc
-    build:
-      context: ./
-      dockerfile: Dockerfile
+    build: .
     ipc: host
     ports:
       - 8888:8888
     volumes:
-      - ./:/workspace
+      - ./ipynbs:/workspace
       - ./data:/workspace/data
     environment:
       - NVIDIA_VISIBLE_DEVICES=all

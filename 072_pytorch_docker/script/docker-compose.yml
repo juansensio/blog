@@ -1,0 +1,14 @@
+version: "2.3"
+
+services:
+  pytorch-script:
+    runtime: nvidia
+    container_name: pytorch-script
+    image: pytorch-script
+    build: .
+    ipc: host
+    volumes:
+      - ./data:/workspace/data
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    command: python main.py
