@@ -5,3 +5,4 @@ data
 .vscode
 log
 results
+__pycache__
