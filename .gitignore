@@ -8,3 +8,5 @@ results
 __pycache__
 minGPT
 *.csv
+*.zip
+dataset
