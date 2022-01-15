@@ -10,3 +10,4 @@ minGPT
 *.csv
 *.zip
 dataset
+google_application_credentials.json
