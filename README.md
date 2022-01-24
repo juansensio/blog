@@ -1,3 +1,3 @@
 # blog
 
-https://sensioai.com/blog/
+https://juansensio.com/blog
