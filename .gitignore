@@ -8,6 +8,7 @@ results
 __pycache__
 minGPT
 *.csv
+*.tgz
 *.zip
 dataset
 google_application_credentials.json
