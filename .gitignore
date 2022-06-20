@@ -14,3 +14,4 @@ dataset
 google_application_credentials.json
 *.dot
 *.md
+*.pkl
