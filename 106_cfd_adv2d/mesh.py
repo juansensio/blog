@@ -68,6 +68,8 @@ class Mesh:
             plt.plot(f.c.x, f.c.y, 'Xr')
         for c in self.c:
             plt.plot(c.c.x, c.c.y, '^g')
+        plt.xlabel('x')
+		plt.ylabel('y', rotation=0)
         plt.show()
 
 
@@ -107,3 +109,23 @@ if __name__ == '__main__':
     assert mesh.f[4].area() == 0.5
     assert mesh.f[5].area() == 0.5
     assert mesh.f[6].area() == 0.5
+    mesh = Mesh(2, 2, [0, 1], [0, 1])
+    assert len(mesh.v) == 9
+    assert len(mesh.f) == 12
+    assert len(mesh.c) == 4
+    assert mesh.c[0].volume() == 0.25
+    assert mesh.c[1].volume() == 0.25
+    assert mesh.c[2].volume() == 0.25
+    assert mesh.c[3].volume() == 0.25
+    assert mesh.f[0].area() == 0.5
+    assert mesh.f[6].area() == 0.5
+    mesh = Mesh(2, 2, [-1, 1], [0, 10])
+    assert len(mesh.v) == 9
+    assert len(mesh.f) == 12
+    assert len(mesh.c) == 4
+    assert mesh.c[0].volume() == 5.
+    assert mesh.c[1].volume() == 5.
+    assert mesh.c[2].volume() == 5.
+    assert mesh.c[3].volume() == 5.
+    assert mesh.f[0].area() == 1.
+    assert mesh.f[6].area() == 5.
