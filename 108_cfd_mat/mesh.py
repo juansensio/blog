@@ -1,0 +1,190 @@
+from dataclasses import dataclass, field
+import numpy as np 
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+@dataclass
+class Point:
+	x: float
+	y: float
+
+@dataclass
+class Vertex:
+	p: Point
+
+@dataclass
+class Face:
+	v: list[Vertex]
+	c: Point
+	cells: list[int] = field(default_factory=list, init=False)
+	n: np.array = field(init=False)
+	a: float = field(init=False)
+
+	def __post_init__(self):
+		assert len(self.v) == 2
+		self.n = np.array([self.v[1].p.y - self.v[0].p.y, self.v[0].p.x - self.v[1].p.x]) 
+		self.n /= np.linalg.norm(self.n)
+		self.a = ((self.v[1].p.x - self.v[0].p.x)**2 + (self.v[1].p.y - self.v[0].p.y)**2)**0.5
+
+	def order_cells(self, c):
+		if len(self.cells) == 2:
+			c1, c2 = self.cells
+			v = np.array([c[c2].c.x - c[c1].c.x, c[c2].c.y - c[c1].c.y])
+			if np.dot(v, self.n) < 0:
+				self.cells = [c2, c1]
+
+@dataclass
+class Cell:
+	f: list[int]
+	c: Point = field(init=False)
+	fo: list[int] = field(default_factory=list, init=False)
+	v: float = field(init=False)
+
+	def __init__(self, fi, ix, faces):
+		self.f = fi
+		fs = [faces[i] for i in self.f]
+		cx = np.mean([f.c.x for f in fs]) 
+		cy = np.mean([f.c.y for f in fs]) 
+		self.c = Point(cx, cy)
+		assert len(self.f) == 4
+		for _f in fs:
+			if len(_f.cells) >= 2:
+				raise Exception()	
+			_f.cells.append(ix)
+		self.v = faces[self.f[0]].a * faces[self.f[1]].a 
+			
+	def order_faces(self, faces):
+		self.fo = []
+		for i in self.f:
+			f = faces[i]
+			v = np.array([f.c.x - self.c.x, f.c.y - self.c.y])
+			self.fo.append(1 if np.dot(v, f.n) > 0 else -1)
+
+@dataclass
+class Mesh:
+	Nx: int
+	Ny: int
+	Lx: list[float] 
+	Ly: list[float] 
+
+	v: list[Vertex] = field(init=False)
+	f: list[Face] = field(init=False)
+	c: list[Cell] = field(init=False)
+	fi: list[int] = field(default_factory=list, init=False)
+	fb: list[int] = field(default_factory=list, init=False)
+
+	def __post_init__(self):
+		# generate vertices
+		vx = np.linspace(self.Lx[0], self.Lx[1], self.Nx+1)
+		vy = np.linspace(self.Ly[0], self.Ly[1], self.Ny+1)
+		self.v = [Vertex(Point(x, y)) for y in vy for x in vx]
+		# generate faces
+		fh = [Face([self.v[i + (self.Nx+1)*j], self.v[i+1+ (self.Nx+1)*j]], Point((vx[i]+vx[i+1])/2, vy[j])) for i in range(self.Nx) for j in range(self.Ny + 1)]
+		fv = [Face([self.v[i + j*(self.Nx+1)], self.v[i+ (self.Nx+1)+j*(self.Nx+1)]], Point(vx[i], (vy[j]+vy[j+1])/2)) for j in range(self.Ny) for i in range(self.Nx+1)]
+		self.f = fv + fh
+		# generate cells
+		self.c = [Cell([i + j*(self.Nx+1), len(fv) + i*(self.Ny+1)+1+j, i + j*(self.Nx+1) + 1, len(fv) + i*(self.Ny+1)+j], i + self.Nx*j, self.f) for j in range(self.Ny) for i in range(self.Nx)]
+		# order faces (c0 -> c1)
+		# split faces into internal and boundary
+		for i, f in enumerate(self.f):
+			f.order_cells(self.c)
+			if len(f.cells) == 2:
+				self.fi.append(i)
+			else:
+				self.fb.append(i)
+		# boundary faces always point outwards
+		for i in self.fb:
+			f = self.f[i]
+			c = self.c[f.cells[0]]
+			v = np.array([f.c.x - c.c.x, f.c.y - c.c.y])
+			if np.dot(v, f.n) < 0:
+				f.n *= -1
+		# order faces wrt cells (all point outwards)
+		for c in self.c:
+			c.order_faces(self.f)
+		
+	def plot(self, normals=False):
+		plt.scatter([v.p.x for v in self.v], [v.p.y for v in self.v])
+		for f in self.f:
+			plt.plot([v.p.x for v in f.v], [v.p.y for v in f.v], 'r-')
+			plt.plot(f.c.x, f.c.y, 'Xr')
+		for c in self.c:
+			plt.plot(c.c.x, c.c.y, '^g')
+		if normals:
+			for f in self.f:
+				plt.quiver(f.c.x, f.c.y, f.n[0], f.n[1])
+		plt.xlabel('x')
+		plt.ylabel('y', rotation=0)
+		plt.xlim([self.Lx[0] - 0.1, self.Lx[1] + 0.1])
+		plt.ylim([self.Ly[0] - 0.1, self.Ly[1] + 0.1])
+		plt.show()		
+
+	def plot_field(self, p, ax, title=None):
+		ax.plot_surface(
+			[[self.c[i + j*self.Nx].c.x for i in range(self.Nx)] for j in range(self.Ny)], 
+			[[self.c[i + j*self.Nx].c.y for i in range(self.Nx)] for j in range(self.Ny)], 
+			p.reshape(self.Ny, self.Nx),
+			cmap='viridis'
+		)
+		ax.set_xlabel('x')
+		ax.set_ylabel('y')
+		if title:
+			ax.set_title(title)
+
+
+if __name__ == '__main__':
+    mesh = Mesh(1, 1, [0, 1], [0, 1])
+    assert len(mesh.v) == 4
+    assert len(mesh.f) == 4
+    assert len(mesh.c) == 1
+    assert mesh.c[0].v == 1.
+    assert mesh.f[0].a == 1.
+    assert mesh.f[1].a == 1.
+    assert mesh.f[2].a == 1.
+    assert mesh.f[3].a == 1.
+    mesh = Mesh(2, 1, [0, 1], [0, 1])
+    assert len(mesh.v) == 6
+    assert len(mesh.f) == 7
+    assert len(mesh.c) == 2
+    assert mesh.c[0].v == 0.5
+    assert mesh.c[1].v == 0.5
+    assert mesh.f[0].a == 1.
+    assert mesh.f[1].a == 1.
+    assert mesh.f[2].a == 1.
+    assert mesh.f[3].a == 0.5
+    assert mesh.f[4].a == 0.5
+    assert mesh.f[5].a == 0.5
+    assert mesh.f[6].a == 0.5
+    mesh = Mesh(1, 2, [0, 1], [0, 1])
+    assert len(mesh.v) == 6
+    assert len(mesh.f) == 7
+    assert len(mesh.c) == 2
+    assert mesh.c[0].v == 0.5
+    assert mesh.c[1].v == 0.5
+    assert mesh.f[0].a == 0.5
+    assert mesh.f[1].a == 0.5
+    assert mesh.f[2].a == 0.5
+    assert mesh.f[3].a == 0.5
+    assert mesh.f[4].a == 1.
+    assert mesh.f[5].a == 1.
+    assert mesh.f[6].a == 1.
+    mesh = Mesh(2, 2, [0, 1], [0, 1])
+    assert len(mesh.v) == 9
+    assert len(mesh.f) == 12
+    assert len(mesh.c) == 4
+    assert mesh.c[0].v == 0.25
+    assert mesh.c[1].v == 0.25
+    assert mesh.c[2].v == 0.25
+    assert mesh.c[3].v == 0.25
+    assert mesh.f[0].a == 0.5
+    assert mesh.f[6].a == 0.5
+    mesh = Mesh(2, 2, [-1, 1], [0, 10])
+    assert len(mesh.v) == 9
+    assert len(mesh.f) == 12
+    assert len(mesh.c) == 4
+    assert mesh.c[0].v == 5.
+    assert mesh.c[1].v == 5.
+    assert mesh.c[2].v == 5.
+    assert mesh.c[3].v == 5.
+    assert mesh.f[0].a == 5.
+    assert mesh.f[6].a == 1.
