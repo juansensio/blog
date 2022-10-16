@@ -1,11 +1,13 @@
 import numpy as np
+from scipy.sparse import coo_matrix
 
 class Euler:
 	def __init__(self, mesh):
-		self.S = np.zeros((len(mesh.c), len(mesh.f)), dtype=float)
+		S = np.zeros((len(mesh.c), len(mesh.f)), dtype=float)
 		for i, c in enumerate(mesh.c):
 			for j, f in enumerate(c.f):
-				self.S[i, f] = c.fo[j] / c.v
+				S[i, f] = c.fo[j] / c.v
+		self.S = coo_matrix(S)
 
 	def __call__(self, F, p, dt):
 		R = self.S @ F

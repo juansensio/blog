@@ -1,15 +1,17 @@
 import numpy as np
+from scipy.sparse import coo_matrix
 
 class Upwind:
 	
 	def __init__(self, mesh, vel):
-		self.U = np.zeros((len(mesh.f), len(mesh.c)), dtype=float)
+		U = np.zeros((len(mesh.f), len(mesh.c)), dtype=float)
 		for i in mesh.fi:
 			f = mesh.f[i]
 			c0, c1 = f.cells
 			u = np.dot(vel(f.c.x, f.c.y), f.n)
-			self.U[i, c0] = u*(u > 0)*f.a
-			self.U[i, c1] = u*(u < 0)*f.a
+			U[i, c0] = u*(u > 0)*f.a
+			U[i, c1] = u*(u < 0)*f.a
+		self.U = coo_matrix(U)
 
 	def __call__(self, p):
 		return self.U @ p
