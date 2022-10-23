@@ -16,3 +16,5 @@ google_application_credentials.json
 *.md
 *.pkl
 *.log
+*.json
+*.txt
