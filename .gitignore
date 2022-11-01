@@ -18,3 +18,4 @@ google_application_credentials.json
 *.log
 *.json
 *.txt
+.env
