@@ -19,3 +19,4 @@ google_application_credentials.json
 *.json
 *.txt
 .env
+sd-concept-output
