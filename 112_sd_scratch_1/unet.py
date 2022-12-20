@@ -75,4 +75,4 @@ class UNet(torch.nn.Module):
         x = self.deconv2(x, x2)
         x = self.deconv3(x, x1)
         x = self.out(x)
-        return torch.tanh(x)
+        return x
