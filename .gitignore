@@ -21,3 +21,5 @@ google_application_credentials.json
 .env
 sd-concept-output
 caprica
+*npz
+*ckpt
