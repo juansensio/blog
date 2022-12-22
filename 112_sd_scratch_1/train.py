@@ -5,7 +5,7 @@ import math
 from unet import UNet
 import os
 
-EPOCHS = 30
+EPOCHS = 100
 BATCH_SIZE = 64
 
 
