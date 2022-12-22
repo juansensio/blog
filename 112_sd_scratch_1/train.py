@@ -5,7 +5,7 @@ import math
 from unet import UNet
 import os
 
-EPOCHS = 500
+EPOCHS = 30
 BATCH_SIZE = 64
 
 
@@ -69,13 +69,13 @@ dl = torch.utils.data.DataLoader(
     ds, batch_size=BATCH_SIZE, shuffle=True, num_workers=8, pin_memory=True)
 model = DiffusionModel().cuda()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+ckpt_path = None
 
 model.train()
-pb = tqdm.tqdm(range(1, EPOCHS+1))
-ckpt_path = None
-for epoch in pb:
+for epoch in range(1, EPOCHS+1):
     losses = []
-    for im, noise, t in dl:
+    pb = tqdm.tqdm(dl)
+    for im, noise, t in pb:
         im, noise, t = im.cuda(), noise.cuda(), t.cuda().squeeze(-1)
         output = model(im, t)
         loss = torch.nn.functional.mse_loss(output, noise)
@@ -83,7 +83,8 @@ for epoch in pb:
         optimizer.step()
         optimizer.zero_grad()
         losses.append(loss.item())
-    pb.set_description(f'Epoch {epoch}/{EPOCHS} loss {np.mean(losses):.5f}')
+        pb.set_description(
+            f'Epoch {epoch}/{EPOCHS} loss {np.mean(losses):.5f}')
     if ckpt_path is not None:
         os.remove(ckpt_path)
     ckpt_path = f"model_{epoch}.ckpt"
