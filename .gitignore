@@ -23,3 +23,6 @@ sd-concept-output
 caprica
 *npz
 *ckpt
+*.pt
+*.onnx
+*.pth
