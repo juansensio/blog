@@ -26,3 +26,4 @@ caprica
 *.pt
 *.onnx
 *.pth
+*.pdf
