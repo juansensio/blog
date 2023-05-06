@@ -27,3 +27,4 @@ caprica
 *.onnx
 *.pth
 *.pdf
+.chroma
